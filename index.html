@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>事件循环模型</title>
+    <style>
+        html {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        strong {
+            display: block;
+            text-align: center;
+            color: #444;
+        }
+
+        pre {
+            padding: 0 15px;
+            background-color: #000;
+            border-radius: 10px;
+            overflow: auto;
+        }
+
+        .comment {
+            color: greenyellow;
+        }
+
+        code {
+            color: greenyellow;
+        }
+
+        .tasks {
+            display: flex;
+            flex-wrap: wrap;
+            border: 1px solid #000;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .task {
+            padding: 5px 10px;
+            margin-right: 5px;
+            background-color: #000;
+            color: #fff;
+        }
+
+        p {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>事件循环模型(Event Loop)</h1>
+    <strong>Javascript是怎么执行的，宏任务和微任务以及异步的原理</strong>
+    <h2>js源文件</h2>
+    <pre>
+        <code>
+queueMicrotask(function callback1() {
+    console.log("microtask");
+});
+
+setTimeout(function callback2() {
+    console.log("macrotask 1");
+}, 1000);
+
+btn.addEventListener("click", function callback3() {
+    console.log("marcotask 2");
+});
+
+console.log("macrotask 3");
+        </code>
+    </pre>
+    <h2>step 1</h2>
+    <p>将源文件内容包裹在一个函数中，然后作为onLaunch内置宏任务(macrotask)的回调函数执行</p>
+    <pre>
+        <code>
+function onLaunch() {
+    queueMicrotask(function callback1() {
+        console.log("microtask");
+    });
+
+    setTimeout(function callback2() {
+        console.log("macrotask 1");
+    }, 1000);
+
+    btn.addEventListener("click", function callback3() {
+        console.log("marcotask 2");
+    });
+
+    console.log("macrotask 3");
+}
+        </code>
+    </pre>
+    <h3>call tasks</h3>
+    <div class="tasks">
+        <div class="task">onLaunch()</div>
+    </div>
+    <h2>step 2</h2>
+    <p>执行queueMicrotask(callback1)提交一个微任务(microtask)，任务是如果当前没有宏任务要执行的时候，执行callback1()</p>
+    <pre>
+        <code>
+queueMicrotask(function callback1() {
+    console.log("microtask");
+});
+        </code>
+    </pre>
+    <h3>call tasks</h3>
+    <div class="tasks">
+        <div class="task">onLaunch()</div>
+        <div class="task">queueMicrotask(callback1)</div>
+    </div>
+    <h2>step 3</h2>
+    <p>setTimeout(callback2, 1000)提交一个宏任务(macrotask)，任务是1000毫秒过后执行callback2()</p>
+    <pre>
+        <code>
+setTimeout(function callback2() {
+    console.log("macrotask 1");
+}, 1000);
+        </code>
+    </pre>
+    <h3>call tasks</h3>
+    <div class="tasks">
+        <div class="task">onLaunch()</div>
+        <div class="task">setTimeout(callback2, 1000)</div>
+    </div>
+    <h2>step 4</h2>
+    <p>btn.addEventListener("click", callback3)提交一个宏任务(macrotask)，任务是当btn元素被点击的时候执行callback3()</p>
+    <pre>
+        <code>
+btn.addEventListener("click", function callback3() {
+    console.log("marcotask 2");
+});
+        </code>
+    </pre>
+    <h3>call tasks</h3>
+    <div class="tasks">
+        <div class="task">onLaunch()</div>
+        <div class="task">btn.addEventListener("click", callback3)</div>
+    </div>
+    <h2>step 5</h2>
+    <p>console.log("macrotask 3")提交一个宏任务(macrotask)，任务是在控制台打印macrotask 3</p>
+    <pre>
+        <code>
+console.log("macrotask 3");
+        </code>
+    </pre>
+    <h3>call tasks</h3>
+    <div class="tasks">
+        <div class="task">onLaunch()</div>
+        <div class="task">console.log("macrotask 3")</div>
+    </div>
+    <h2>step 6</h2>
+    <p>此时宏任务(macrotask)已经全部执行完毕，开始执行微任务(microtask)队列，并且按照先进先出顺序全部执行完毕</p>
+    <pre>
+        <code>
+function callback1() {
+    console.log("microtask");
+}
+        </code>
+    </pre>
+    <h3>call tasks</h3>
+    <div class="tasks">
+        <div class="task">callback1()</div>
+        <div class="task">console.log("microtask")</div>
+    </div>
+    <h2>step 7</h2>
+    <p>此时微任务(macrotask)已经全部执行完毕，1000毫秒的时间到了，开始执行callback2()</p>
+    <pre>
+        <code>
+function callback2() {
+    console.log("macrotask 1");
+}
+        </code>
+    </pre>
+    <h3>call tasks</h3>
+    <div class="tasks">
+        <div class="task">callback2()</div>
+        <div class="task">console.log("macrotask 1")</div>
+    </div>
+    <h2>step 8</h2>
+    <p>然后不知道什么时候用户点击了下btn元素，开始执行callback3()</p>
+    <pre>
+        <code>
+function callback3() {
+    console.log("marcotask 2");
+}
+        </code>
+    </pre>
+    <h3>call tasks</h3>
+    <div class="tasks">
+        <div class="task">callback3()</div>
+        <div class="task">console.log("marcotask 2")</div>
+    </div>
+</body>
+
+</html>
